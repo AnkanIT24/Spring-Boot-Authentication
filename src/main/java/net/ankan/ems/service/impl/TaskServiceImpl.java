@@ -133,6 +133,7 @@ public class TaskServiceImpl implements TaskService {
     // ── get all assignments (ADMIN) ───────────────────────────────────────────
 
     @Override
+    @Transactional
     public List<TaskResponseDto> getAllTaskAssignments() {
         return taskAssignmentRepository.findAll()
                 .stream()
@@ -143,6 +144,7 @@ public class TaskServiceImpl implements TaskService {
     // ── get own assignments (USER) ────────────────────────────────────────────
 
     @Override
+    @Transactional
     public List<TaskResponseDto> getMyTasks() {
         User current = getCurrentUser();
         return taskAssignmentRepository.findByAssignedUser(current)
