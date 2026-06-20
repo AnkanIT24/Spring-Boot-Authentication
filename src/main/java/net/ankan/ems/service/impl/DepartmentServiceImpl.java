@@ -3,11 +3,14 @@ package net.ankan.ems.service.impl;
 import lombok.AllArgsConstructor;
 import net.ankan.ems.dto.DepartmentDto;
 import net.ankan.ems.entity.Department;
+import net.ankan.ems.entity.Employee;
 import net.ankan.ems.exception.ResourceNotFoundException;
 import net.ankan.ems.mapper.DepartmentMapper;
 import net.ankan.ems.repository.DepartmentRepository;
+import net.ankan.ems.repository.EmployeeRepository;
 import net.ankan.ems.service.DepartmentService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 public class DepartmentServiceImpl implements DepartmentService {
 
     private DepartmentRepository departmentRepository;
+    private EmployeeRepository employeeRepository;
 
     @Override
     public DepartmentDto createDepartment(DepartmentDto departmentDto) {
@@ -44,7 +48,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     public DepartmentDto updateDepartment(Long departmentId, DepartmentDto updatedDepartment) {
 
         Department department = departmentRepository.findById(departmentId).orElseThrow(
-                () -> new ResourceNotFoundException("Department is not exists with a given id:"+ departmentId)
+                () -> new ResourceNotFoundException("Department is not exists with a given id:" + departmentId)
         );
 
         department.setDepartmentName(updatedDepartment.getDepartmentName());
@@ -56,10 +60,18 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
+    @Transactional
     public void deleteDepartment(Long departmentId) {
         departmentRepository.findById(departmentId).orElseThrow(
                 () -> new ResourceNotFoundException("Department is not exists with a given id: " + departmentId)
         );
+
+        // Unassign all employees from this department before deleting
+        List<Employee> employees = employeeRepository.findByDepartmentId(departmentId);
+        for (Employee emp : employees) {
+            emp.setDepartment(null);
+            employeeRepository.save(emp);
+        }
 
         departmentRepository.deleteById(departmentId);
     }
